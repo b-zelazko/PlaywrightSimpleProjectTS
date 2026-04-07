@@ -1,44 +1,55 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Pulpit tests", () => {
-  test.describe.configure({retries: 3})
+  test.describe.configure({ retries: 3 });
   
-  test("Money transfer", async ({ page }) => {
-    await page.goto("https://demo-bank.vercel.app/");
-    await page.getByTestId("login-input").fill("testerLO");
-    await page.getByTestId("password-input").fill("12345678");
+  test.beforeEach(async ({ page }) => {
+    const userId = "testerLO";
+    const userPassword = "12345678";
+    await page.goto('/');
+    await page.getByTestId("login-input").fill(userId);
+    await page.getByTestId("password-input").fill(userPassword);
     await page.getByTestId("login-button").click();
-
-    // wait for page to fully load:
+  
     await page.waitForLoadState("domcontentloaded");
+    // wait for page to fully load:
+  });
 
-    await page.locator("#widget_1_transfer_receiver").selectOption("2");
-    await page.locator("#widget_1_transfer_amount").fill("150");
-    await page.locator("#widget_1_transfer_title").fill("zwrot kasy");
+  test("Money transfer", async ({ page }) => {
+    //Arrange
+    const receiverId = "2";
+    const transferAmount = "150";
+    const transferTitle = "zwrot kasy";
+
+    //Act
+
+    await page.locator("#widget_1_transfer_receiver").selectOption(receiverId);
+    await page.locator("#widget_1_transfer_amount").fill(transferAmount);
+    await page.locator("#widget_1_transfer_title").fill(transferTitle);
     await page.getByRole("button", { name: "wykonaj" }).click();
     await page.getByTestId("close-button").click();
 
+    //Assert
     await expect(page.getByTestId("message-text")).toHaveText(
-      "Przelew wykonany! Chuck Demobankowy - 150,00PLN - zwrot kasy",
+      `Przelew wykonany! Chuck Demobankowy - ${transferAmount},00PLN - ${transferTitle}`,
     );
   });
 
-  test('Successful mobile top-up', async ({ page }) => {
-    await page.goto("https://demo-bank.vercel.app/");
-    await page.getByTestId("login-input").fill("testerLO");
-    await page.getByTestId("password-input").fill("12345678");
-    await page.getByTestId("login-button").click();
+  test("Successful mobile top-up", async ({ page }) => {
+    //Arrange
+    const topUpReceiver = "500 xxx xxx";
+    const topUpAmount = "100";
 
-    // wait for page to fully load:
-    await page.waitForLoadState("domcontentloaded");
-    await page.locator('#widget_1_topup_receiver').selectOption('500 xxx xxx');
-    await page.locator('#widget_1_topup_amount').fill('100');
-    await page.locator('#uniform-widget_1_topup_agreement > span').click();
-    await page.getByRole('button', { name: 'doładuj telefon' }).click();
-    await page.getByTestId('close-button').click();
-    
+    //Act
+    await page.locator("#widget_1_topup_receiver").selectOption(topUpReceiver);
+    await page.locator("#widget_1_topup_amount").fill(topUpAmount);
+    await page.locator("#uniform-widget_1_topup_agreement > span").click();
+    await page.getByRole("button", { name: "doładuj telefon" }).click();
+    await page.getByTestId("close-button").click();
+
+    //Assert
     await expect(page.getByTestId("message-text")).toHaveText(
-      "Doładowanie wykonane! 100,00PLN na numer 500 xxx xxx",
+      `Doładowanie wykonane! ${topUpAmount},00PLN na numer ${topUpReceiver}`,
     );
-});
+  });
 });
